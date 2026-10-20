@@ -34,55 +34,54 @@ Academic Integrity Statement:
 """
 
 import numpy as np
-from pathlib import Path
-from PIL import Image, ImageOps
+from PIL import Image
 
-def create_mean_kernel(kernel_size: int):
+
+def create_mean_kernel(kernel_size):
     value = 1.0 / (kernel_size * kernel_size)
-    return np.full((kernel_size,kernel_size),value,dtype = float)
+    return np.full((kernel_size, kernel_size), value, dtype=float)
+
+
+def pad_image(resized_img_array, target_size):
+    pil_img = Image.fromarray(resized_img_array.astype(np.uint8))
+    padded_img = pil_img.resize((target_size, target_size), Image.BILINEAR)
+    return np.array(padded_img, dtype=float)
+
 
 def apply_kernel(image, kernel):
     height = kernel.shape[0]
     width = kernel.shape[1]
 
-    #zero-pad
-    padded_img = pad_image(image, 1)
-    avg_img = np.zeros_like(image)
+    # pad to (image size + kernel size - 1) so every window fits
+    padded_img = pad_image(image, image.shape[0] + height - 1)
+    filtered_img = np.zeros(image.shape, dtype=float)
 
-    #iterate through image
+    # slide kernel across image with stride 1
     for y in range(image.shape[0]):
         for x in range(image.shape[1]):
-            window = padded_img[y : y + height, x : x + width]
-            print(window)
+            window = padded_img[y:y + height, x:x + width]
+            filtered_img[y, x] = np.sum(window * kernel)
 
-            avg_img[y, x] = np.sum(window * kernel)
+    return filtered_img
 
-    return avg_img
 
-def pad_image(resized_img_array,target_size):
-    pil_img = Image.fromarray(resized_img_array)
-    padded_img = ImageOps.expand(pil_img,target_size)
-    return np.array(padded_img)
-    
 def main():
-    # User input for kernel size
     kernel_size = int(input("Enter kernel size: "))
-    kernel = create_mean_kernel(kernel_size) # Creates kernel array
+    kernel = create_mean_kernel(kernel_size)
     kernel_sum = np.sum(kernel)
 
     image = np.zeros((5, 5))
-    image[2,2] = 255
+    image[2, 2] = 255
 
-    filtered_image = apply_kernel(apply_kernel(image,kernel), kernel)
-    
+    filtered_image = apply_kernel(image, kernel)
+
     print(f"Kernel size: {kernel_size}x{kernel_size}")
     print(f"Kernel sum: {kernel_sum:.6f}")
     print("Kernel:")
-    print(kernel)
+    print(np.array2string(kernel, precision=6))
     print("Filtered image:")
-    print(filtered_image)
+    print(np.array2string(filtered_image, precision=6))
 
-    
 
 if __name__ == "__main__":
     main()
