@@ -31,10 +31,39 @@ Academic Integrity Statement:
     submitting is my own original work.
 """
 
+def rgb_to_grayscale(rgb_array):
+    return np.dot(rgb_array[..., :3], [0.2126, 0.7152, 0.0722])
 
+# Scale image values from 0-255 to 0-1 for processing.
+def normalize_img(img_array):
+    return img_array / 255.0
 
-    
-    
+# Linearize sRGB values before numeric processing.
+def linearize_img(norm_array):
+    rdtype = np.asarray(norm_array).dtype
+    values = np.asarray(norm_array, dtype=np.float64)
+    linear = np.where(
+        values <= 0.04045,
+        values / 12.92,
+        ((values + 0.055) / 1.055) ** 2.4,
+    )
+    return linear.astype(rdtype)
+
+# Load the image and strip the alpha channel if present.
+def load_img(filename):
+    img = Image.open(filename)
+    img_arr = np.array(img)
+
+    if img_arr.ndim == 3 and img_arr.shape[2] == 4:
+            img_arr = img_arr[..., :3]
+
+    return linearize_img(normalize_img(img_arr))
+
+def main():
+    filePath = input("Enter the path to the image file: ")
+    img_arr = load_img(filePath)
+
+    gray_arr = rgb_to_grayscale(img_arr)
 
 
 if __name__ == "__main__":
