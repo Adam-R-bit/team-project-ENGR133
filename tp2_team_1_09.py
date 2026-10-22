@@ -31,6 +31,11 @@ Academic Integrity Statement:
     submitting is my own original work.
 """
 
+from matplotlib import pyplot as plt
+import numpy as np
+from PIL import Image
+from scipy.signal import convolve2d
+
 def rgb_to_grayscale(rgb_array):
     return np.dot(rgb_array[..., :3], [0.2126, 0.7152, 0.0722])
 
@@ -58,6 +63,12 @@ def load_img(filename):
             img_arr = img_arr[..., :3]
 
     return linearize_img(normalize_img(img_arr))
+
+def apply_sobel_x(img_array):
+    sobel_x = np.array([[1, 0, -1],
+                        [2, 0, -2],
+                        [1, 0, -1]])
+    return convolve2d(img_array, sobel_x)
 
 def main():
     filePath = input("Enter the path to the image file: ")
